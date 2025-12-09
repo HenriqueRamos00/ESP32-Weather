@@ -32,7 +32,7 @@ const deviceId = computed(() => Number(route.params.id))
 const formData = ref<DeviceCreate>({
   type: 'ESP32',
   location: '',
-  status: 'offline',
+  function: 'sensor',
 })
 
 // UI State
@@ -53,7 +53,7 @@ onMounted(async () => {
         formData.value = {
           type: fetchedDevice.type,
           location: fetchedDevice.location,
-          status: fetchedDevice.status,
+          function: fetchedDevice.function,
         }
         await fetchApiKeys(deviceId.value)
       }
@@ -82,7 +82,7 @@ const handleSave = async () => {
       const updateData: DeviceUpdate = {
         type: formData.value.type,
         location: formData.value.location,
-        status: formData.value.status,
+        function: formData.value.function,
       }
       await updateDevice(deviceId.value, updateData)
       success('Device Updated', 'Your device has been updated successfully')
@@ -193,19 +193,17 @@ const handleDeleteKey = async (keyId: number) => {
             class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500 transition-colors"
           />
         </div>
-
-        <!-- Status (Only for editing) -->
-        <div v-if="isEditing">
-          <label class="block text-slate-400 mb-1 text-sm">Status</label>
+        <!-- Function -->
+        <div>
+          <label class="block text-slate-400 mb-1 text-sm">Function</label>
           <select
-            v-model="formData.status"
+            v-model="formData.function"
             class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500 transition-colors"
           >
-            <option value="online">Online</option>
-            <option value="offline">Offline</option>
+            <option value="sensor">Sensor</option>
+            <option value="display">Display</option>
           </select>
         </div>
-
         <!-- API Keys Section (Only for editing) -->
         <div v-if="isEditing" class="pt-4 border-t border-slate-700">
           <div class="flex items-center justify-between mb-3">

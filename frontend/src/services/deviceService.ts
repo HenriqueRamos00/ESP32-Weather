@@ -4,8 +4,9 @@ export interface Device {
   id: number
   type: 'ESP32' | 'ESP8266' | 'ESP32-S3'
   location: string
+  function: 'sensor' | 'display'
   status: 'online' | 'offline'
-  last_seen: string
+  last_seen: string | null
   created_at: string
   updated_at: string
 }
@@ -13,13 +14,13 @@ export interface Device {
 export interface DeviceCreate {
   type: 'ESP32' | 'ESP8266' | 'ESP32-S3'
   location: string
-  status: 'online' | 'offline'
+  function: 'sensor' | 'display'
 }
 
 export interface DeviceUpdate {
   type?: 'ESP32' | 'ESP8266' | 'ESP32-S3'
   location?: string
-  status?: 'online' | 'offline'
+  function?: 'sensor' | 'display'
 }
 
 export interface DeviceListResponse {

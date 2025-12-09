@@ -14,7 +14,7 @@ const navigateToEdit = () => {
 }
 
 const formattedLastSeen = computed(() => {
-  if (!props.device.last_seen) return 'Never'
+  if (!props.device.last_seen) return '---'
   const date = new Date(props.device.last_seen)
   return date.toLocaleString()
 })
@@ -28,7 +28,10 @@ const formattedLastSeen = computed(() => {
       <div class="flex justify-between items-start mb-4">
         <div>
           <h3 class="font-bold text-lg text-white">{{ device.location }}</h3>
-          <span class="text-sm text-slate-400">{{ device.type }}</span>
+          <span class="text-sm text-slate-400"
+            >{{ device.type }} •
+            {{ device.function.charAt(0).toUpperCase() + device.function.slice(1) }}</span
+          >
         </div>
         <div class="flex items-center gap-2 bg-slate-900 px-2 py-1 rounded-full text-xs">
           <span
