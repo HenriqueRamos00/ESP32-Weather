@@ -1,9 +1,12 @@
 from datetime import datetime
 from enum import Enum
+from typing import TYPE_CHECKING, List
 from sqlalchemy import String, DateTime, Enum as SQLEnum
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
+if TYPE_CHECKING:
+    from app.models.api_key import ApiKey
 
 class DeviceType(str, Enum):
     ESP32 = "ESP32"
@@ -42,4 +45,10 @@ class Device(Base):
         default=datetime.utcnow,
         onupdate=datetime.utcnow,
         nullable=False
+    )
+    
+    api_keys: Mapped[List["ApiKey"]] = relationship(
+        "ApiKey", 
+        back_populates="device",
+        cascade="all, delete-orphan"
     )

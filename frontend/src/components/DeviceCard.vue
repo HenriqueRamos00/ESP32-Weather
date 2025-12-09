@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import type { Device } from '@/stores/deviceStore'
+import type { Device } from '@/services/deviceService'
 import { useRouter } from 'vue-router'
+import { computed } from 'vue'
 
 const props = defineProps<{
   device: Device
@@ -11,11 +12,17 @@ const router = useRouter()
 const navigateToEdit = () => {
   router.push({ name: 'DeviceEdit', params: { id: props.device.id } })
 }
+
+const formattedLastSeen = computed(() => {
+  if (!props.device.last_seen) return 'Never'
+  const date = new Date(props.device.last_seen)
+  return date.toLocaleString()
+})
 </script>
 
 <template>
   <div
-    class="bg-slate-800 rounded-lg p-5 shadow-lg border border-slate-700 flex flex-col justify-between"
+    class="bg-slate-800 rounded-lg p-5 shadow-lg border border-slate-700 flex flex-col justify-between hover:border-slate-600 transition-colors"
   >
     <div>
       <div class="flex justify-between items-start mb-4">
@@ -36,7 +43,7 @@ const navigateToEdit = () => {
 
       <div class="text-sm text-slate-400 mb-6">
         <p>Last Seen:</p>
-        <p class="text-slate-200">{{ device.lastSeen }}</p>
+        <p class="text-slate-200">{{ formattedLastSeen }}</p>
       </div>
     </div>
 
@@ -44,7 +51,7 @@ const navigateToEdit = () => {
       @click="navigateToEdit"
       class="w-full bg-blue-600 hover:bg-blue-500 text-white py-2 rounded transition-colors text-sm font-medium"
     >
-      Update Info
+      Manage Device
     </button>
   </div>
 </template>
