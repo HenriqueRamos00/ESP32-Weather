@@ -2,7 +2,7 @@ from datetime import datetime, timezone, timedelta
 from typing import Any, Sequence
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, desc, and_
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 from app.models.weather_reading import WeatherReading as WeatherReadingModel
 from app.models.device import Device as DeviceModel, DeviceFunction
 from app.schemas.weather_reading import (
@@ -87,6 +87,7 @@ async def get_latest_by_device(
     """Get the most recent weather reading for a specific device."""
     stmt = (
         select(WeatherReadingModel)
+        .options(selectinload(WeatherReadingModel.device))
         .where(WeatherReadingModel.device_id == device_id)
         .order_by(desc(WeatherReadingModel.recorded_at))
         .limit(1)

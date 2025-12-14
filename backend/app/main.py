@@ -3,7 +3,7 @@ from typing import AsyncGenerator
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.api.endpoints import devices, health, api_keys, weather
+from app.api.endpoints import devices, esp32_weather, health, api_keys, web_weather
 from app.db.init_db import init_db
 
 
@@ -45,9 +45,14 @@ app.include_router(
     tags=["api-keys"]
 )
 app.include_router(
-    weather.router,
-    prefix=f"{settings.API_V1_STR}/api-keys", 
-    tags=["weather_readings"]
+    esp32_weather.router,
+    prefix=f"{settings.API_V1_STR}/esp32", 
+    tags=["esp32-weather"]
+)
+app.include_router(
+    web_weather.router,
+    prefix=f"{settings.API_V1_STR}/weather",
+    tags=["web-weather"]
 )
 
 

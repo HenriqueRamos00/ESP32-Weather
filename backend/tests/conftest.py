@@ -12,7 +12,7 @@ TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
 engine = create_async_engine(
     TEST_DATABASE_URL,
-    echo=True,
+    #echo=True,
 )
 
 TestingSessionLocal = async_sessionmaker(
@@ -50,3 +50,8 @@ async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
         yield ac
     
     app.dependency_overrides.clear()
+
+@pytest_asyncio.fixture(scope="session", autouse=True)
+async def _dispose_engine_after_tests():
+    yield
+    await engine.dispose()

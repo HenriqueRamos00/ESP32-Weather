@@ -1,18 +1,13 @@
 import pytest
 from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.device import DeviceType, DeviceStatus
-
+from app.models.device import DeviceType, DeviceFunction
 
 @pytest.mark.asyncio
 async def test_create_device(client: AsyncClient) -> None:
     """Test creating a device."""
-    device_data = {
-        "type": DeviceType.ESP32.value,
-        "location": "Living Room",
-        "status": DeviceStatus.ONLINE.value,
-    }
-    
+    device_data = {"type": DeviceType.ESP32.value,
+                "location": "Kitchen",
+                "function": DeviceFunction.DISPLAY.value}
     response = await client.post("/api/v1/devices/", json=device_data)
     assert response.status_code == 201
     data = response.json()
@@ -25,19 +20,25 @@ async def test_create_device(client: AsyncClient) -> None:
 async def test_get_devices(client: AsyncClient) -> None:
     """Test getting all devices."""
     # Create a device first
-    device_data = {
+    device_data_1 = {
         "type": DeviceType.ESP32.value,
         "location": "Garden",
-        "status": DeviceStatus.OFFLINE.value,
+        "function": DeviceFunction.DISPLAY,
     }
-    await client.post("/api/v1/devices/", json=device_data)
+    device_data_2 = {
+        "type": DeviceType.ESP32_S3.value,
+        "location": "Garden",
+        "function": DeviceFunction.SENSOR.value,
+    }
+    await client.post("/api/v1/devices/", json=device_data_1)
+    await client.post("/api/v1/devices/", json=device_data_2)
     
     # Get all devices
     response = await client.get("/api/v1/devices/")
     assert response.status_code == 200
     data = response.json()
-    assert data["total"] >= 1
-    assert len(data["devices"]) >= 1
+    assert data["total"] >= 2
+    assert len(data["devices"]) >= 2
 
 
 @pytest.mark.asyncio
@@ -47,7 +48,7 @@ async def test_get_device(client: AsyncClient) -> None:
     device_data = {
         "type": DeviceType.ESP32_S3.value,
         "location": "Bedroom",
-        "status": DeviceStatus.ONLINE.value,
+        "function": DeviceFunction.DISPLAY.value,
     }
     create_response = await client.post("/api/v1/devices/", json=device_data)
     device_id = create_response.json()["id"]
@@ -67,18 +68,18 @@ async def test_update_device(client: AsyncClient) -> None:
     device_data = {
         "type": DeviceType.ESP8266.value,
         "location": "Kitchen",
-        "status": DeviceStatus.OFFLINE.value,
+        "function": DeviceFunction.DISPLAY.value,
     }
     create_response = await client.post("/api/v1/devices/", json=device_data)
     device_id = create_response.json()["id"]
     
     # Update the device
-    update_data = {"location": "Garage", "status": DeviceStatus.ONLINE.value}
+    update_data = {"location": "Garage", "function": DeviceFunction.SENSOR.value}
     response = await client.put(f"/api/v1/devices/{device_id}", json=update_data)
     assert response.status_code == 200
     data = response.json()
     assert data["location"] == update_data["location"]
-    assert data["status"] == update_data["status"]
+    assert data["function"] == update_data["function"]
 
 
 @pytest.mark.asyncio
@@ -88,7 +89,7 @@ async def test_delete_device(client: AsyncClient) -> None:
     device_data = {
         "type": DeviceType.ESP32.value,
         "location": "Basement",
-        "status": DeviceStatus.OFFLINE.value,
+        "function": DeviceFunction.SENSOR.value,
     }
     create_response = await client.post("/api/v1/devices/", json=device_data)
     device_id = create_response.json()["id"]
