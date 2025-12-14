@@ -7,6 +7,7 @@ from app.db.base import Base
 
 if TYPE_CHECKING:
     from app.models.api_key import ApiKey
+    from app.models.weather_reading import WeatherReading
 
 class DeviceType(str, Enum):
     ESP32 = "ESP32"
@@ -48,6 +49,12 @@ class Device(Base):
     
     api_keys: Mapped[List["ApiKey"]] = relationship(
         "ApiKey", 
+        back_populates="device",
+        cascade="all, delete-orphan"
+    )
+
+    weather_readings: Mapped[List["WeatherReading"]] = relationship(
+        "WeatherReading",
         back_populates="device",
         cascade="all, delete-orphan"
     )
