@@ -1,4 +1,3 @@
-# schemas/weather_reading.py
 from datetime import datetime
 from typing import Sequence
 from pydantic import BaseModel, ConfigDict, Field

@@ -19,7 +19,7 @@ const navItems: NavItem[] = [
 <template>
   <aside class="w-64 bg-slate-950 border-r border-slate-800 flex flex-col">
     <div class="h-16 flex items-center px-4 border-b border-slate-800">
-      <span class="text-xl font-bold">My App</span>
+      <span class="text-xl font-bold">Weather App</span>
     </div>
 
     <nav class="flex-1 py-4">

@@ -4,7 +4,7 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.device import Device, DeviceType, DeviceFunction
-from app.models.api_key import ApiKey  # assumes this exists
+from app.models.api_key import ApiKey
 
 ESP32_BASE = "/api/v1/esp32"
 
