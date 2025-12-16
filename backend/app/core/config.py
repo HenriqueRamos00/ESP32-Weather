@@ -12,6 +12,13 @@ class Settings(BaseSettings):
 
     API_V1_STR: str = "/api/v1"
     PROJECT_NAME: str = "Device Management API"
+
+    ADMIN_USER: str
+    ADMIN_PASSWORD: str
+
+    ACCESS_TOKEN_EXPIRE_MINUTES: str
+    SECRET_KEY : str
+    ALGORITHM: str = 'HS256'
     
     DATABASE_URL: PostgresDsn
     

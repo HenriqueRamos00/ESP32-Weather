@@ -1,6 +1,6 @@
 from app.api.deps.db import AsyncSessionDep, get_db
 
-from app.api.deps.auth import (
+from app.api.deps.api_auth import (
     ApiKeyDep,
     AuthenticatedDeviceDep,
     SensorDeviceDep,
@@ -9,6 +9,13 @@ from app.api.deps.auth import (
     get_authenticated_device,
     get_sensor_device,
     get_display_device,
+)
+
+from app.api.deps.jwt_auth import (
+    AdminDep,
+    AdminOrUserDep,
+    get_current_active_user,
+    require_role
 )
 
 __all__ = [
@@ -22,4 +29,8 @@ __all__ = [
     "get_authenticated_device",
     "get_sensor_device",
     "get_display_device",
+    "get_current_active_user",
+    "require_role",
+    "AdminDep",
+    "AdminOrUserDep"
 ]

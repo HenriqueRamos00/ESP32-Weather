@@ -1,4 +1,6 @@
 import axios, { type AxiosError, type AxiosResponse } from 'axios'
+import router from '@/router'
+import { useAuthStore } from '@/stores/auth'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'
 
@@ -19,17 +21,29 @@ apiClient.interceptors.request.use(
     }
     return config
   },
-  (error) => {
-    return Promise.reject(error)
-  },
+  (error) => Promise.reject(error),
 )
 
 // Response interceptor
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error: AxiosError) => {
+    const status = error.response?.status
+
+    if (status === 401) {
+      const authStore = useAuthStore()
+      authStore.clearAuth()
+
+      if (router.currentRoute.value.name !== 'Login') {
+        router.push({
+          name: 'Login',
+          query: { redirect: router.currentRoute.value.fullPath },
+        })
+      }
+    }
+
     const message = extractErrorMessage(error)
-    return Promise.reject(new ApiError(message, error.response?.status))
+    return Promise.reject(new ApiError(message, status))
   },
 )
 
@@ -43,9 +57,7 @@ function extractErrorMessage(error: AxiosError): string {
       return data.message
     }
   }
-  if (error.message) {
-    return error.message
-  }
+  if (error.message) return error.message
   return 'An unexpected error occurred'
 }
 

@@ -2,25 +2,17 @@ from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import APIKeyHeader
 from app.core.config import settings
-from app.api.endpoints import devices, esp32_weather, health, api_keys, web_weather
+from app.api.endpoints import (devices, esp32_weather, 
+                               health, api_keys, web_weather,
+                               auth, users)
 from app.db.init_db import init_db
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    """Lifespan events."""
-    # Startup
-    await init_db()
-    yield
-    # Shutdown
-    pass
 
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    openapi_url=f"{settings.API_V1_STR}/openapi.json",
-    lifespan=lifespan,
+    openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
 
 # CORS
@@ -54,7 +46,16 @@ app.include_router(
     prefix=f"{settings.API_V1_STR}/weather",
     tags=["web-weather"]
 )
-
+app.include_router(
+    auth.router,
+    prefix=f"{settings.API_V1_STR}/auth",
+    tags=["auth"]
+)
+app.include_router(
+    users.router,
+    prefix=f"{settings.API_V1_STR}/users",
+    tags=["users"]
+)
 
 @app.get("/")
 async def root() -> dict[str, str]:
