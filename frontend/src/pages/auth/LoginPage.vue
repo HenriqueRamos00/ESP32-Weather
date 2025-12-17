@@ -1,41 +1,26 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { apiClient } from '@/services/api'
-import type { ApiError } from '@/services/api'
-import { useAuthStore } from '@/stores/auth'
+import { useAuth } from '@/composables/useAuth'
 
 const email = ref('')
 const password = ref('')
-const loading = ref(false)
-const errorMessage = ref<string | null>(null)
 
 const router = useRouter()
 const route = useRoute()
-const authStore = useAuthStore()
+const { login, loading, error: authError } = useAuth()
 
 async function onSubmit() {
   if (loading.value) return
-  loading.value = true
-  errorMessage.value = null
 
   try {
-    const { data } = await apiClient.post('/auth/login', {
-      email: email.value,
-      password: password.value,
-    })
-
-    // Backend returns: { access_token: string, token_type: "bearer" }
-    authStore.setToken(data.access_token)
+    await login(email.value, password.value)
 
     // Redirect to original target or default to '/'
     const redirect = (route.query.redirect as string) || '/'
     router.push(redirect)
-  } catch (err) {
-    const apiErr = err as ApiError
-    errorMessage.value = apiErr.message || 'Login failed'
-  } finally {
-    loading.value = false
+  } catch {
+    // Error is already set by useAuth
   }
 }
 </script>
@@ -46,8 +31,8 @@ async function onSubmit() {
       <h1 class="text-2xl font-bold mb-6 text-white text-center">Login</h1>
 
       <form class="space-y-4" @submit.prevent="onSubmit">
-        <div v-if="errorMessage" class="text-sm text-red-400 bg-red-950/40 px-3 py-2 rounded">
-          {{ errorMessage }}
+        <div v-if="authError" class="text-sm text-red-400 bg-red-950/40 px-3 py-2 rounded">
+          {{ authError }}
         </div>
 
         <div>
@@ -80,7 +65,7 @@ async function onSubmit() {
           class="w-full py-2 rounded-md bg-sky-600 hover:bg-sky-700 text-white font-medium disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           <span v-if="!loading">Sign in</span>
-          <span v-else> Signing in... </span>
+          <span v-else>Signing in...</span>
         </button>
       </form>
     </div>

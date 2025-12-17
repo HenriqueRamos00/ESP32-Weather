@@ -11,10 +11,9 @@ from app.models.user import User as UserModel, UserRole
 
 
 oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl="/auth/login",  # adjust if your login URL differs
+    tokenUrl=f"{settings.API_V1_STR}/auth/login",
     description="JWT access token",
 )
-
 
 async def get_current_user(
     db: Annotated[AsyncSession, Depends(get_db)],
