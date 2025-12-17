@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from typing import Any
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, status
 from app.api.deps import AsyncSessionDep, SensorDeviceDep, DisplayDeviceDep
 from app.schemas.weather_reading import (
     WeatherReading,

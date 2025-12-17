@@ -3,6 +3,7 @@ import MainLayout from '@/layouts/MainLayout.vue'
 import DashboardPage from '@/pages/DashboardPage.vue'
 import DevicesPage from '@/pages/DevicePage.vue'
 import DeviceFormPage from '@/pages/DeviceFormPage.vue'
+import UserPage from '@/pages/UserPage.vue'
 import OptionsPage from '@/pages/OptionsPage.vue'
 import LoginPage from '@/pages/auth/LoginPage.vue'
 import { useAuthStore, type UserRole } from '@/stores/auth'
@@ -35,6 +36,12 @@ const routes: RouteRecordRaw[] = [
         path: 'devices/:id',
         name: 'DeviceEdit',
         component: DeviceFormPage,
+        meta: { roles: ['admin'] as UserRole[] },
+      },
+      {
+        path: 'users',
+        name: 'Users',
+        component: UserPage,
         meta: { roles: ['admin'] as UserRole[] },
       },
       {

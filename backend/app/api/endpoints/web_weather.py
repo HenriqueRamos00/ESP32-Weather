@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from typing import Any
 from fastapi import APIRouter, HTTPException, Query, status
-from app.api.deps import AsyncSessionDep
+from app.api.deps import AsyncSessionDep, AdminOrUserDep
 from app.schemas.weather_reading import (
     WeatherReadingList,
     WeatherReadingWithLocation,
@@ -20,6 +20,7 @@ router = APIRouter()
 )
 async def get_latest_for_display(
     db: AsyncSessionDep,
+    _: AdminOrUserDep
 ) -> Any:
     """
     Get the latest weather reading from all sensor devices.
@@ -41,6 +42,7 @@ async def get_latest_for_display(
 async def get_sensor_latest_for_display(
     device_id: int,
     db: AsyncSessionDep,
+    _: AdminOrUserDep
 ) -> Any:
     """
     Get the latest weather reading from a specific sensor.
@@ -66,6 +68,7 @@ async def get_sensor_latest_for_display(
 )
 async def get_all_readings(
     db: AsyncSessionDep,
+    _: AdminOrUserDep,
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     start_time: datetime | None = Query(None),
@@ -98,6 +101,7 @@ async def get_all_readings(
 async def get_sensor_history(
     device_id: int,
     db: AsyncSessionDep,
+    _: AdminOrUserDep,
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     start_time: datetime | None = Query(None, description="Filter readings from this time"),
@@ -134,6 +138,7 @@ async def get_sensor_history(
 async def get_sensor_summary(
     device_id: int,
     db: AsyncSessionDep,
+    _: AdminOrUserDep,
     hours: int = Query(24, ge=1, le=168, description="Hours to aggregate (1-168)"),
 ) -> Any:
     """

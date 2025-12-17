@@ -1,6 +1,6 @@
 from typing import Any
 from fastapi import APIRouter, HTTPException, status
-from app.api.deps import AsyncSessionDep
+from app.api.deps import AsyncSessionDep, AdminDep, AdminOrUserDep
 from app.schemas.device import Device, DeviceCreate, DeviceUpdate, DeviceList
 import app.services.device as dvc
 
@@ -10,6 +10,7 @@ router = APIRouter()
 @router.get("/", response_model=DeviceList)
 async def get_devices(
     db: AsyncSessionDep,
+    _: AdminOrUserDep,
     skip: int = 0,
     limit: int = 100,
 ) -> Any:
@@ -20,7 +21,11 @@ async def get_devices(
 
 
 @router.get("/{device_id}", response_model=Device)
-async def get_device(device_id: int, db: AsyncSessionDep) -> Any:
+async def get_device(
+    device_id: int, 
+    db: AsyncSessionDep,
+    _: AdminOrUserDep
+) -> Any:
     """Get device by ID."""
     device = await dvc.get_by_id(db, device_id)
     if not device:
@@ -32,7 +37,11 @@ async def get_device(device_id: int, db: AsyncSessionDep) -> Any:
 
 
 @router.post("/", response_model=Device, status_code=status.HTTP_201_CREATED)
-async def create_device(device_in: DeviceCreate, db: AsyncSessionDep) -> Any:
+async def create_device(
+    device_in: DeviceCreate, 
+    db: AsyncSessionDep,
+    _: AdminDep
+) -> Any:
     """Create new device."""
     return await dvc.create(db, device_in)
 
@@ -42,6 +51,7 @@ async def update_device(
     device_id: int,
     device_in: DeviceUpdate,
     db: AsyncSessionDep,
+    _: AdminDep
 ) -> Any:
     """Update device."""
     device = await dvc.update(db, device_id, device_in)
@@ -54,7 +64,11 @@ async def update_device(
 
 
 @router.delete("/{device_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_device(device_id: int, db: AsyncSessionDep) -> None:
+async def delete_device(
+    device_id: int, 
+    db: AsyncSessionDep,
+    _: AdminDep
+) -> None:
     """Delete device."""
     success = await dvc.delete(db, device_id)
     if not success:
