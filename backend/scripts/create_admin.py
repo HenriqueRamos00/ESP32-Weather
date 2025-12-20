@@ -1,4 +1,3 @@
-# scripts/ensure_admin.py
 import asyncio
 
 from app.core.config import settings

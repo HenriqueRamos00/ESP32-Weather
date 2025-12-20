@@ -5,10 +5,10 @@ import { useWeatherReadings } from '@/composables/useWeatherReading'
 import { useToast } from '@/composables/useToast'
 
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
-import DashboardFilters, { type MetricKey } from '@/components/DashboardFilter.vue'
-import DateRangePicker from '@/components/DateRangePicker.vue'
-import WeatherMetricChart from '@/components/WeatherMetricChart.vue'
-import SensorSummaryCard from '@/components/SensorSummaryCard.vue'
+import DashboardFilters, { type MetricKey } from '@/components/Dashboard/DashboardFilter.vue'
+import DateRangePicker from '@/components/Dashboard/DateRangePicker.vue'
+import WeatherMetricChart from '@/components/Dashboard/WeatherMetricChart.vue'
+import SensorSummaryCard from '@/components/Dashboard/SensorSummaryCard.vue'
 
 import type { WeatherReading, WeatherSummary } from '@/services/weatherReadingService'
 

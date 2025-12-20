@@ -15,7 +15,7 @@ from app.core.config import settings
 from app.db.base import Base
 
 # Import all models to ensure they're registered with Base
-from app.models import User, Device, ApiKey, WeatherReading
+from app.models import User, Device, ApiKey, WeatherReading, Setting
 
 # this is the Alembic Config object
 config = context.config

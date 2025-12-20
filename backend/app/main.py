@@ -6,7 +6,7 @@ from fastapi.security import APIKeyHeader
 from app.core.config import settings
 from app.api.endpoints import (devices, esp32_weather, 
                                health, api_keys, web_weather,
-                               auth, users)
+                               auth, users, settings as settings_router)
 from app.db.init_db import init_db
 
 
@@ -55,6 +55,11 @@ app.include_router(
     users.router,
     prefix=f"{settings.API_V1_STR}/users",
     tags=["users"]
+)
+app.include_router(
+    settings_router.router,
+    prefix=f"{settings.API_V1_STR}/settings",
+    tags=["settings"]
 )
 
 @app.get("/")

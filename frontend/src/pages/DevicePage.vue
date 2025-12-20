@@ -2,7 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { useDevices } from '@/composables/useDevices'
 import { useToast } from '@/composables/useToast'
-import DeviceCard from '@/components/DeviceCard.vue'
+import DeviceCard from '@/components/Devices/DeviceCard.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import { useRouter } from 'vue-router'
 

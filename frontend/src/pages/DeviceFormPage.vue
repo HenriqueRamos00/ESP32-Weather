@@ -6,7 +6,7 @@ import { useToast } from '@/composables/useToast'
 import type { DeviceCreate, DeviceUpdate } from '@/services/deviceService'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import ConfirmModal from '@/components/ConfirmModal.vue'
-import ApiKeyModal from '@/components/ApiKeyModal.vue'
+import ApiKeyModal from '@/components/DeviceForm/ApiKeyModal.vue'
 
 const route = useRoute()
 const router = useRouter()

@@ -6,7 +6,7 @@ import { useAuthStore } from '@/stores/auth'
 import type { User, UserCreate, UserUpdate } from '@/services/userService'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import ConfirmModal from '@/components/ConfirmModal.vue'
-import UserFormModal from '@/components/UserFormModal.vue'
+import UserFormModal from '@/components/User/UserFormModal.vue'
 
 const { users, total, loading, fetchUsers, createUser, updateUser, deleteUser } = useUsers()
 const { success, error: showError } = useToast()
