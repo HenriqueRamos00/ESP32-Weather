@@ -1,8 +1,8 @@
-"""Initial migration
+"""inital migration
 
-Revision ID: c1a0a7a6639e
+Revision ID: 6f29d4eb610f
 Revises: 
-Create Date: 2025-12-16 14:24:25.236512
+Create Date: 2025-12-20 00:06:53.535822
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'c1a0a7a6639e'
+revision: str = '6f29d4eb610f'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -46,7 +46,7 @@ def upgrade() -> None:
     op.create_index(op.f('ix_users_id'), 'users', ['id'], unique=False)
     op.create_table('api_keys',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('key', sa.String(length=64), nullable=False),
+    sa.Column('key_hash', sa.String(length=64), nullable=False),
     sa.Column('name', sa.String(length=255), nullable=False),
     sa.Column('device_id', sa.Integer(), nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=False),
@@ -56,7 +56,7 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_api_keys_id'), 'api_keys', ['id'], unique=False)
-    op.create_index(op.f('ix_api_keys_key'), 'api_keys', ['key'], unique=True)
+    op.create_index(op.f('ix_api_keys_key_hash'), 'api_keys', ['key_hash'], unique=True)
     op.create_table('weather_readings',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('device_id', sa.Integer(), nullable=False),
@@ -85,7 +85,7 @@ def downgrade() -> None:
     op.drop_index('ix_weather_readings_device_recorded', table_name='weather_readings')
     op.drop_index(op.f('ix_weather_readings_device_id'), table_name='weather_readings')
     op.drop_table('weather_readings')
-    op.drop_index(op.f('ix_api_keys_key'), table_name='api_keys')
+    op.drop_index(op.f('ix_api_keys_key_hash'), table_name='api_keys')
     op.drop_index(op.f('ix_api_keys_id'), table_name='api_keys')
     op.drop_table('api_keys')
     op.drop_index(op.f('ix_users_id'), table_name='users')

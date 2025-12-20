@@ -1,4 +1,4 @@
-from typing import Annotated, Callable
+from typing import Annotated, Awaitable, Callable
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -56,7 +56,7 @@ async def get_current_active_user(
     return current_user
 
 
-def require_role(*allowed_roles: UserRole) -> Callable:
+def require_role(*allowed_roles: UserRole) -> Callable[..., Awaitable[UserModel]]:
     if not allowed_roles:
         raise ValueError("At least one allowed role must be provided")
 

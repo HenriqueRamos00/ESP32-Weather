@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta, timezone
-from typing import Any, Optional
+from typing import Any, Mapping, Optional
 
 import bcrypt
 from jose import JWTError, jwt
@@ -47,7 +47,7 @@ async def authenticate_user(
 def create_access_token(
     subject: str | int,
     expires_delta: Optional[timedelta] = None,
-    extra_claims: dict | None = None,
+    extra_claims: Optional[Mapping[str, Any]] = None,
 ) -> str:
     if expires_delta is None:
         expires_delta = timedelta(minutes=int(settings.ACCESS_TOKEN_EXPIRE_MINUTES))

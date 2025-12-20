@@ -1,10 +1,22 @@
+import hashlib
+import hmac
 import secrets
 from datetime import datetime, timezone
 from typing import Sequence
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
+from app.core.config import settings
 from app.models.api_key import ApiKey as ApiKeyModel
-from app.schemas.api_key import ApiKeyCreate
+from app.schemas.api_key import ApiKeyCreate, ApiKeyWithSecret
+
+API_KEY_HASH_SECRET = settings.API_KEY_HASH_SECRET
+
+def hash_key(key: str) -> str:
+    return hmac.new(
+        API_KEY_HASH_SECRET.encode("utf-8"),
+        key.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
 
 def generate_key() -> str:
     """Generate a secure API key."""
@@ -35,14 +47,16 @@ async def get_by_id(db: AsyncSession, key_id: int) -> ApiKeyModel | None:
 
 async def get_by_key(db: AsyncSession, key: str) -> ApiKeyModel | None:
     """Get an API key by the key value."""
-    stmt = select(ApiKeyModel).where(ApiKeyModel.key == key)
+    key_hash = hash_key(key)
+    stmt = select(ApiKeyModel).where(ApiKeyModel.key_hash == key_hash)
     result = await db.execute(stmt)
     return result.scalar_one_or_none()
 
-async def create(db: AsyncSession, api_key_in: ApiKeyCreate) -> ApiKeyModel:
+async def create(db: AsyncSession, api_key_in: ApiKeyCreate) -> ApiKeyWithSecret:
     """Create a new API key."""
+    raw_key = generate_key()
     api_key = ApiKeyModel(
-        key=generate_key(),
+        key_hash=hash_key(raw_key),
         name=api_key_in.name,
         device_id=api_key_in.device_id,
         is_active=True,
@@ -50,7 +64,17 @@ async def create(db: AsyncSession, api_key_in: ApiKeyCreate) -> ApiKeyModel:
     db.add(api_key)
     await db.flush()
     await db.refresh(api_key)
-    return api_key
+
+    # Construct response manually to include plaintext key
+    return ApiKeyWithSecret(
+        id=api_key.id,
+        name=api_key.name,
+        device_id=api_key.device_id,
+        is_active=api_key.is_active,
+        last_used=api_key.last_used,
+        created_at=api_key.created_at,
+        key=raw_key,
+    )
 
 async def revoke(db: AsyncSession, key_id: int) -> ApiKeyModel | None:
     """Revoke an API key."""

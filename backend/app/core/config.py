@@ -18,6 +18,7 @@ class Settings(BaseSettings):
 
     ACCESS_TOKEN_EXPIRE_MINUTES: str
     SECRET_KEY : str
+    API_KEY_HASH_SECRET : str
     ALGORITHM: str = 'HS256'
     
     DATABASE_URL: PostgresDsn
