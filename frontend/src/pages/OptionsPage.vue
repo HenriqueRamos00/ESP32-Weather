@@ -43,7 +43,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="max-w-4xl">
+  <div class="w-full max-w-full">
     <div class="mb-6">
       <h1 class="text-2xl font-bold text-white mb-2">Options</h1>
       <p class="text-slate-400">Configure system settings and preferences</p>

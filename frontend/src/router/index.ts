@@ -6,6 +6,7 @@ import DeviceFormPage from '@/pages/DeviceFormPage.vue'
 import UserPage from '@/pages/UserPage.vue'
 import OptionsPage from '@/pages/OptionsPage.vue'
 import LoginPage from '@/pages/auth/LoginPage.vue'
+import NotFoundPage from '@/pages/NotFoundPage.vue.vue'
 import { useAuthStore, type UserRole } from '@/stores/auth'
 
 const routes: RouteRecordRaw[] = [
@@ -57,6 +58,12 @@ const routes: RouteRecordRaw[] = [
     name: 'Login',
     component: LoginPage,
     meta: { requiresAuth: false, guestOnly: true },
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'NotFound',
+    component: NotFoundPage,
+    meta: { requiresAuth: false },
   },
 ]
 
