@@ -17,8 +17,8 @@ class Settings(BaseSettings):
     ADMIN_PASSWORD: str
 
     ACCESS_TOKEN_EXPIRE_MINUTES: str
-    SECRET_KEY : str
-    API_KEY_HASH_SECRET : str
+    SECRET_KEY: str
+    API_KEY_HASH_SECRET: str
     ALGORITHM: str = 'HS256'
     
     DATABASE_URL: PostgresDsn
@@ -39,5 +39,25 @@ class Settings(BaseSettings):
             return v
         return v
 
+    @property
+    def is_production(self) -> bool:
+        """Check if running in production environment."""
+        return self.ENVIRONMENT.lower() == "production"
+    
+    @property
+    def docs_url(self) -> str | None:
+        """Return docs URL or None if in production."""
+        return None if self.is_production else "/docs"
+    
+    @property
+    def redoc_url(self) -> str | None:
+        """Return redoc URL or None if in production."""
+        return None if self.is_production else "/redoc"
+    
+    @property
+    def openapi_url(self) -> str | None:
+        """Return OpenAPI schema URL or None if in production."""
+        return None if self.is_production else f"{self.API_V1_STR}/openapi.json"
 
-settings = Settings() # pyright: ignore[reportCallIssue]
+
+settings = Settings()  # pyright: ignore[reportCallIssue]

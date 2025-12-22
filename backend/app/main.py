@@ -1,5 +1,4 @@
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import APIKeyHeader
@@ -7,12 +6,13 @@ from app.core.config import settings
 from app.api.endpoints import (devices, esp32_weather, 
                                health, api_keys, web_weather,
                                auth, users, settings as settings_router)
-from app.db.init_db import init_db
 
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    openapi_url=f"{settings.API_V1_STR}/openapi.json"
+    openapi_url=settings.openapi_url,
+    docs_url=settings.docs_url,
+    redoc_url=settings.redoc_url
 )
 
 # CORS
@@ -61,8 +61,3 @@ app.include_router(
     prefix=f"{settings.API_V1_STR}/settings",
     tags=["settings"]
 )
-
-@app.get("/")
-async def root() -> dict[str, str]:
-    """Root endpoint."""
-    return {"message": "Device Management API"}

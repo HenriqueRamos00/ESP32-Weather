@@ -1,12 +1,15 @@
 from fastapi import APIRouter
 from sqlalchemy import text
-from app.api.deps import AsyncSessionDep
+from app.api.deps import AsyncSessionDep, LocalhostDep
 
 router = APIRouter()
 
 
 @router.get("/")
-async def health_check(db: AsyncSessionDep) -> dict[str, str]:
+async def health_check(
+    db: AsyncSessionDep,
+    _: LocalhostDep
+) -> dict[str, str]:
     """Health check endpoint."""
     try:
         await db.execute(text("SELECT 1"))

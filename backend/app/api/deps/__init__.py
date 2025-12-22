@@ -18,6 +18,11 @@ from app.api.deps.jwt_auth import (
     require_role
 )
 
+from app.api.deps.localhost_only import (
+    LocalhostDep,
+    localhost_only
+)
+
 __all__ = [
     "AsyncSessionDep",
     "ApiKeyDep",
@@ -32,5 +37,7 @@ __all__ = [
     "get_current_active_user",
     "require_role",
     "AdminDep",
-    "AdminOrUserDep"
+    "AdminOrUserDep",
+    "LocalhostDep",
+    "localhost_only"
 ]
