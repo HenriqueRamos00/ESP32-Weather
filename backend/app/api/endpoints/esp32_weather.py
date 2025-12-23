@@ -1,16 +1,26 @@
 from datetime import datetime, timezone
 from typing import Any
+from zoneinfo import ZoneInfo
 from fastapi import APIRouter, HTTPException, status
-from app.api.deps import AsyncSessionDep, SensorDeviceDep, DisplayDeviceDep
+from app.api.deps import (
+    AsyncSessionDep, 
+    SensorDeviceDep,
+    DisplayDeviceDep, 
+    AuthenticatedDeviceDep
+)
 from app.schemas.weather_reading import (
     WeatherReading,
     WeatherReadingCreate,
     WeatherReadingWithLocation,
     LatestReadings,
 )
+from app.schemas.timestamp import Timestamp
+from app.core.config import settings
 import app.services.weather_reading as weather_service
 
 router = APIRouter()
+
+TZ = ZoneInfo(settings.TIMEZONE_STR)
 
 @router.post(
     "/readings",
@@ -90,3 +100,14 @@ async def get_sensor_latest_for_display(
         )
     
     return reading
+
+@router.get(
+    "/display/time",
+    response_model=Timestamp,
+    summary="Current timestamp"
+)
+async def get_current_time(
+    _device: AuthenticatedDeviceDep
+) -> Any:
+    now = datetime.now(TZ)
+    return Timestamp(timestamp=now)

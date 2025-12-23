@@ -22,6 +22,8 @@ class Settings(BaseSettings):
     ALGORITHM: str = 'HS256'
     
     DATABASE_URL: PostgresDsn
+
+    TIMEZONE_STR: str = "America/Sao_Paulo"
     
     BACKEND_CORS_ORIGINS: list[str] = [
         "http://localhost:5173",
