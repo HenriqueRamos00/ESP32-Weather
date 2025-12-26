@@ -1,7 +1,6 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import APIKeyHeader
 from app.core.config import settings
 from app.api.endpoints import (devices, esp32_weather, 
                                health, api_keys, web_weather,
