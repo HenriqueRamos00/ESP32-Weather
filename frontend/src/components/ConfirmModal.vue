@@ -25,26 +25,26 @@ const variantClasses = {
     <Transition name="modal">
       <div
         v-if="show"
-        class="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
+        class="fixed inset-0 bg-black/70 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4"
         @click.self="emit('cancel')"
       >
         <div
-          class="bg-slate-800 p-6 rounded-lg shadow-xl max-w-md w-full mx-4 border border-slate-600"
+          class="bg-slate-800 p-6 rounded-t-lg sm:rounded-lg shadow-xl max-w-md w-full border border-slate-600 border-b-0 sm:border-b"
         >
           <h3 class="text-lg font-bold text-white mb-2">{{ title }}</h3>
           <p class="text-slate-400 mb-6">{{ message }}</p>
 
-          <div class="flex justify-end gap-3">
+          <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
             <button
               @click="emit('cancel')"
-              class="px-4 py-2 text-slate-400 hover:text-white transition-colors"
+              class="w-full sm:w-auto px-4 py-3 sm:py-2 text-slate-400 hover:text-white hover:bg-slate-700 sm:hover:bg-transparent rounded-md sm:rounded-none transition-colors"
             >
               {{ cancelText || 'Cancel' }}
             </button>
             <button
               @click="emit('confirm')"
               :class="[
-                'px-4 py-2 rounded text-white transition-colors',
+                'w-full sm:w-auto px-4 py-3 sm:py-2 rounded-md text-white transition-colors',
                 variantClasses[variant || 'danger'],
               ]"
             >
@@ -63,8 +63,25 @@ const variantClasses = {
   transition: opacity 0.2s ease;
 }
 
+.modal-enter-active > div,
+.modal-leave-active > div {
+  transition: transform 0.2s ease;
+}
+
 .modal-enter-from,
 .modal-leave-to {
   opacity: 0;
+}
+
+.modal-enter-from > div,
+.modal-leave-to > div {
+  transform: translateY(100%);
+}
+
+@media (min-width: 640px) {
+  .modal-enter-from > div,
+  .modal-leave-to > div {
+    transform: translateY(0) scale(0.95);
+  }
 }
 </style>

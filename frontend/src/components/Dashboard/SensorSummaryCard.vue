@@ -17,7 +17,7 @@ function fmt(value: number | null | undefined, suffix = '') {
 
     <div v-if="!summary" class="text-slate-400 text-sm">No summary available</div>
 
-    <div v-else class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+    <div v-else class="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-4 gap-3 text-sm">
       <div>
         <div class="text-slate-400">Avg Temp</div>
         <div class="font-semibold">{{ fmt(summary.avg_temperature, '°C') }}</div>
@@ -42,7 +42,7 @@ function fmt(value: number | null | undefined, suffix = '') {
         <div class="text-slate-400">Readings</div>
         <div class="font-semibold">{{ summary.reading_count }}</div>
       </div>
-      <div class="col-span-2">
+      <div class="xs:col-span-2">
         <div class="text-slate-400">Sensor</div>
         <div class="font-semibold">{{ summary.device_location }} (ID: {{ summary.device_id }})</div>
       </div>

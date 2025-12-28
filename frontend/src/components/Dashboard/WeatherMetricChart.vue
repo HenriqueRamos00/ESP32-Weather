@@ -96,7 +96,7 @@ const chartOptions = computed(() => ({
       </h2>
     </div>
 
-    <div class="h-[360px]">
+    <div class="h-[280px] sm:h-[360px]">
       <Line :data="chartData" :options="chartOptions" />
     </div>
   </div>

@@ -147,7 +147,7 @@ watch(
 
 <template>
   <div>
-    <div class="flex justify-between items-start gap-4 mb-6">
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6">
       <div>
         <h1 class="text-2xl font-bold">Dashboard</h1>
         <p class="text-slate-400 text-sm">
@@ -156,7 +156,7 @@ watch(
       </div>
 
       <button
-        class="bg-slate-800 hover:bg-slate-700 border border-slate-700 px-4 py-2 rounded transition-colors disabled:opacity-50"
+        class="bg-slate-800 hover:bg-slate-700 border border-slate-700 px-4 py-2 rounded transition-colors disabled:opacity-50 w-full sm:w-auto"
         :disabled="isBusy || !selectedSensorId"
         @click="selectedSensorId && loadForSensor(selectedSensorId)"
       >

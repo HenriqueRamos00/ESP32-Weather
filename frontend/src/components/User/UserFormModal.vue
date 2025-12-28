@@ -84,10 +84,12 @@ const handleSubmit = () => {
 <template>
   <div
     v-if="show"
-    class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+    class="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4"
     @click.self="emit('close')"
   >
-    <div class="bg-slate-800 rounded-lg p-6 w-full max-w-md shadow-xl">
+    <div
+      class="bg-slate-800 rounded-t-lg sm:rounded-lg p-6 w-full sm:max-w-md shadow-xl max-h-[90vh] overflow-y-auto"
+    >
       <h2 class="text-xl font-bold text-white mb-4">
         {{ user ? 'Edit User' : 'Create User' }}
       </h2>
@@ -156,11 +158,11 @@ const handleSubmit = () => {
         </div>
 
         <!-- Actions -->
-        <div class="flex gap-3 pt-2">
+        <div class="flex flex-col-reverse sm:flex-row gap-3 pt-2">
           <button
             type="button"
             :disabled="saving"
-            class="flex-1 px-4 py-2 rounded-md bg-slate-700 hover:bg-slate-600 text-white transition-colors disabled:opacity-50"
+            class="w-full sm:flex-1 px-4 py-3 sm:py-2 rounded-md bg-slate-700 hover:bg-slate-600 text-white transition-colors disabled:opacity-50"
             @click="emit('close')"
           >
             Cancel
@@ -168,7 +170,7 @@ const handleSubmit = () => {
           <button
             type="submit"
             :disabled="saving"
-            class="flex-1 px-4 py-2 rounded-md bg-sky-600 hover:bg-sky-700 text-white transition-colors disabled:opacity-50"
+            class="w-full sm:flex-1 px-4 py-3 sm:py-2 rounded-md bg-sky-600 hover:bg-sky-700 text-white transition-colors disabled:opacity-50"
           >
             {{ saving ? 'Saving...' : user ? 'Update' : 'Create' }}
           </button>
