@@ -1,0 +1,65 @@
+# examples/docker-compose.yml
+name: device-management
+
+services:
+  db:
+    image: postgres:16
+    container_name: device-management-db
+    environment:
+      POSTGRES_DB: device_management
+      POSTGRES_USER: device_management
+      POSTGRES_PASSWORD: change_me_db_password
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  # One-shot: schema + seed via Alembic
+  migrate:
+    image: henriqueramos2000/weather-app-backend:latest
+    container_name: device-management-migrate
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    command: ["sh", "-c", "alembic upgrade head"]
+    restart: "no"
+
+  # One-shot: create the first admin (run manually)
+  # Usage:
+  #   docker compose --profile admin run --rm -it init-admin -- --email admin@example.com --prompt-password
+  init-admin:
+    image: henriqueramos2000/weather-app-backend:latest
+    container_name: device-management-init-admin
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    env_file:
+      - .env
+    entrypoint: ["python3", "-m", "scripts.init_admin"]
+    command: ["--help"]
+    profiles: ["admin"]
+    restart: "no"
+
+  api:
+    image: henriqueramos2000/weather-app-backend:latest
+    container_name: device-management-api
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+volumes:
+  pgdata:
