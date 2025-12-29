@@ -61,5 +61,14 @@ services:
       - "8000:8000"
     restart: unless-stopped
 
+  frontend:
+    image: henriqueramos2000/weather-app-frontend:latest
+    container_name: device-management-frontend
+    depends_on:
+      - api
+    ports:
+      - "8081:8081"
+    restart: unless-stopped
+
 volumes:
   pgdata:
