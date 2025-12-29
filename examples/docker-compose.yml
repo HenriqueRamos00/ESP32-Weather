@@ -61,7 +61,7 @@ services:
     restart: unless-stopped
 
   frontend:
-    image: frontend_test:latest
+    image: henriqueramos2000/weather-app-frontend:latest
     container_name: device-management-frontend
     env_file:
       - .env
