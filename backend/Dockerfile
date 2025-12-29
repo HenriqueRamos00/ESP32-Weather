@@ -28,13 +28,18 @@ RUN apt-get update && \
 COPY --from=builder /app/.venv /app/.venv
 
 COPY app ./app
-COPY scripts/healthcheck.py ./scripts/healthcheck.py
+COPY scripts ./scripts
+
+COPY alembic ./alembic
+COPY alembic.ini ./alembic.ini
 
 # Create non-root user
-RUN useradd -m -u 1000 appuser && \
+RUN adduser --disabled-password --gecos "" --uid 1000 appuser && \
     chown -R appuser:appuser /app
 
 USER appuser
+
+RUN chmod +x /app/scripts/entrypoint.sh
 
 EXPOSE 8000
 
@@ -42,8 +47,5 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD python scripts/healthcheck.py
 
-CMD ["uvicorn", "app.main:app", 
-    "--host", "0.0.0.0", 
-    "--port", "8000", 
-    "--log-level", "warning", 
-    "--proxy-headers", "--forwarded-allow-ips=*"]
+ENTRYPOINT ["/app/scripts/entrypoint.sh"]
+CMD ["serve"]
