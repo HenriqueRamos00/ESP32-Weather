@@ -2,7 +2,10 @@ import axios, { type AxiosError, type AxiosResponse } from 'axios'
 import router from '@/router'
 import { useAuthStore } from '@/stores/auth'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1'
+const API_BASE_URL = 
+  (window as any).ENV?.API_URL || 
+  import.meta.env.VITE_API_URL || 
+  '/api/v1'
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,

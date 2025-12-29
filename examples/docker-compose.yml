@@ -1,4 +1,3 @@
-# examples/docker-compose.yml
 name: device-management
 
 services:
@@ -31,7 +30,7 @@ services:
 
   # One-shot: create the first admin (run manually)
   # Usage:
-  #   docker compose --profile admin run --rm -it init-admin -- --email admin@example.com --prompt-password
+  #   docker compose --profile admin run --rm -it init-admin --email admin@example.com --prompt-password
   init-admin:
     image: henriqueramos2000/weather-app-backend:latest
     container_name: device-management-init-admin
@@ -62,8 +61,10 @@ services:
     restart: unless-stopped
 
   frontend:
-    image: henriqueramos2000/weather-app-frontend:latest
+    image: frontend_test:latest
     container_name: device-management-frontend
+    env_file:
+      - .env
     depends_on:
       - api
     ports:
