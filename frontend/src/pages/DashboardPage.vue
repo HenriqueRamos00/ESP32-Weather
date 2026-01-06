@@ -8,6 +8,7 @@ import DashboardFilters, { type MetricKey } from '@/components/Dashboard/Dashboa
 import DateRangeButtons, { type RangePreset } from '@/components/Dashboard/DateRangeButtons.vue'
 import WeatherMetricChart from '@/components/Dashboard/WeatherMetricChart.vue'
 import SensorSummaryCard from '@/components/Dashboard/SensorSummaryCard.vue'
+import LatestMetricsCards from '@/components/Dashboard/LatestMetricsCards.vue'
 import type { WeatherReading, WeatherSummary } from '@/services/weatherReadingService'
 
 type MaybeWithStatus = {
@@ -177,7 +178,20 @@ watch(
 <template>
   <div>
     <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6">
-      <!-- header content unchanged -->
+      <div>
+        <h1 class="text-2xl font-bold">Dashboard</h1>
+        <p class="text-slate-400 text-sm">
+          Select a sensor, metric, and date range to visualize readings.
+        </p>
+      </div>
+
+      <button
+        class="bg-slate-800 hover:bg-slate-700 border border-slate-700 px-4 py-2 rounded transition-colors disabled:opacity-50 w-full sm:w-auto"
+        :disabled="isBusy || !selectedSensorId"
+        @click="selectedSensorId && loadForSensor(selectedSensorId)"
+      >
+        Refresh
+      </button>
     </div>
 
     <div v-if="initialLoading" class="flex justify-center items-center py-20">
@@ -208,6 +222,8 @@ watch(
       </div>
 
       <template v-else>
+        <!-- Latest Metrics Cards -->
+        <LatestMetricsCards :readings="chartReadings" />
         <SensorSummaryCard :summary="sensorSummary" />
 
         <!-- Date Range Buttons -->
@@ -238,6 +254,9 @@ watch(
             class="bg-slate-800 border border-slate-700 rounded-lg p-6 text-slate-300"
           >
             No data available for the selected time range.
+          </div>
+          <div v-else class="bg-slate-800 border border-slate-700 rounded-lg p-6 text-slate-300">
+            Start sending data from the ESP device.
           </div>
         </div>
       </template>

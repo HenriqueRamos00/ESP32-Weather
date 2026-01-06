@@ -44,8 +44,15 @@ const metricConfig: Record<MetricKey, { label: string; unit: string; color: stri
 
 const metricMeta = computed(() => metricConfig[props.metric])
 
+// Sort readings by date ascending (oldest first, newest on right)
+const sortedReadings = computed(() => {
+  return [...props.readings].sort(
+    (a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime(),
+  )
+})
+
 const dataSpanHours = computed(() => {
-  const readings = props.readings
+  const readings = sortedReadings.value
   if (!readings || readings.length < 2) return 0
 
   const firstReading = readings[0]
@@ -122,16 +129,16 @@ const maxTicksLimit = computed(() => {
 })
 
 const chartData = computed(() => ({
-  labels: props.readings.map((r) => r.recorded_at),
+  labels: sortedReadings.value.map((r) => r.recorded_at),
   datasets: [
     {
       label: `${metricMeta.value.label} (${metricMeta.value.unit})`,
-      data: props.readings.map((r) => r[props.metric]),
+      data: sortedReadings.value.map((r) => r[props.metric]),
       borderColor: metricMeta.value.color,
       backgroundColor: `${metricMeta.value.color}20`,
       fill: true,
       tension: 0.3,
-      pointRadius: props.readings.length > 100 ? 0 : 2,
+      pointRadius: sortedReadings.value.length > 100 ? 0 : 2,
       pointHoverRadius: 4,
       borderWidth: 2,
     },
@@ -221,7 +228,7 @@ const chartOptions = computed<ChartOptions<'line'>>(() => ({
       <h2 class="text-base sm:text-lg font-semibold truncate mr-2">
         {{ title ?? `${metricMeta.label} over time` }}
       </h2>
-      <span class="text-xs text-slate-400 whitespace-nowrap">{{ readings.length }} pts</span>
+      <span class="text-xs text-slate-400 whitespace-nowrap">{{ sortedReadings.length }} pts</span>
     </div>
 
     <div class="h-[220px] sm:h-[320px]">
