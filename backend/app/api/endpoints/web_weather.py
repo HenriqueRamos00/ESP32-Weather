@@ -103,7 +103,7 @@ async def get_sensor_history(
     db: AsyncSessionDep,
     _: AdminOrUserDep,
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=1000),
+    limit: int = Query(100, ge=1, le=10000),
     start_time: datetime | None = Query(None, description="Filter readings from this time"),
     end_time: datetime | None = Query(None, description="Filter readings until this time"),
 ) -> Any:
