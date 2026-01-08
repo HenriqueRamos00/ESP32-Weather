@@ -1,15 +1,16 @@
 import { ref, readonly } from 'vue'
 import {
   weatherReadingService,
-  type WeatherReading,
+  type WeatherReadingPoint,
   type WeatherReadingWithLocation,
   type LatestReadingsResponse,
   type WeatherSummary,
   type DateLike,
+  type WeatherGranularity,
 } from '@/services/weatherReadingService'
 
 export function useWeatherReadings() {
-  const readings = ref<WeatherReading[]>([])
+  const readings = ref<WeatherReadingPoint[]>([])
   const total = ref(0)
 
   const latestReadings = ref<WeatherReadingWithLocation[]>([])
@@ -29,6 +30,8 @@ export function useWeatherReadings() {
     limit?: number
     start_time?: DateLike
     end_time?: DateLike
+    granularity?: WeatherGranularity
+    auto_granularity?: boolean
   }) => {
     loading.value = true
     error.value = null
@@ -81,6 +84,8 @@ export function useWeatherReadings() {
       limit?: number
       start_time?: DateLike
       end_time?: DateLike
+      granularity?: WeatherGranularity
+      auto_granularity?: boolean
     },
   ) => {
     loading.value = true

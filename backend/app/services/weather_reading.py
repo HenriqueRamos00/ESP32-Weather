@@ -1,16 +1,19 @@
 from datetime import datetime, timezone, timedelta
-from typing import Any, Sequence
+from typing import Any, Sequence, Tuple
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, desc, and_
+from sqlalchemy import Integer, cast, select, func, desc, and_
 from sqlalchemy.orm import joinedload, selectinload
 from app.models.weather_reading import WeatherReading as WeatherReadingModel
 from app.models.device import Device as DeviceModel, DeviceFunction
 from app.schemas.weather_reading import (
+    WeatherGranularity,
+    WeatherReadingAggregate,
     WeatherReadingCreate, 
     WeatherSummary,
     WeatherReading as WeatherReadingSchema,
     WeatherReadingWithLocation
 )
+import app.utils.weather_reading as util
 
 class DeviceNotFoundError(Exception):
     """Raised when the device does not exist."""
@@ -21,34 +24,6 @@ class NoReadingsFoundError(Exception):
     """Raised when there are no readings for the device in the given period."""
     pass
 
-def to_response(reading: WeatherReadingModel) -> WeatherReadingSchema:
-    """Convert DB model to response schema."""
-    return WeatherReadingSchema(
-        id=reading.id,
-        device_id=reading.device_id,
-        temperature=reading.temperature,
-        humidity=reading.humidity,
-        pressure=reading.pressure,
-        wind_speed=reading.wind_speed,
-        rain_amount=reading.rain_amount,
-        recorded_at=reading.recorded_at,
-        created_at=reading.created_at,
-    )
-
-def to_response_with_loc(reading: WeatherReadingModel) -> WeatherReadingWithLocation:
-    """Convert DB model to response schema with location."""
-    return WeatherReadingWithLocation(
-        id=reading.id,
-        device_id=reading.device_id,
-        device_location=reading.device.location,
-        temperature=reading.temperature,
-        humidity=reading.humidity,
-        pressure=reading.pressure,
-        wind_speed=reading.wind_speed,
-        rain_amount=reading.rain_amount,
-        recorded_at=reading.recorded_at,
-        created_at=reading.created_at,
-    )
 
 async def create(
     db: AsyncSession,
@@ -68,7 +43,7 @@ async def create(
     db.add(reading)
     await db.flush()
     await db.refresh(reading)
-    return to_response(reading)
+    return util.to_response(reading)
 
 
 async def get_by_id(
@@ -77,7 +52,7 @@ async def get_by_id(
 ) -> WeatherReadingSchema | None:
     """Get a weather reading by ID."""
     result = await db.get(WeatherReadingModel, reading_id)
-    return to_response(result) if result else None
+    return util.to_response(result) if result else None
 
 
 async def get_latest_by_device(
@@ -94,7 +69,7 @@ async def get_latest_by_device(
     )
     result = await db.execute(stmt)
     reading = result.scalar_one_or_none()
-    return to_response_with_loc(reading) if reading else None
+    return util.to_response_with_loc(reading) if reading else None
 
 
 async def get_latest_from_all_sensors(
@@ -131,7 +106,7 @@ async def get_latest_from_all_sensors(
     result = await db.execute(stmt)
     readings = result.scalars().unique().all()
     
-    return [to_response_with_loc(r) for r in readings]
+    return [util.to_response_with_loc(r) for r in readings]
 
 
 async def get_by_device(
@@ -162,7 +137,7 @@ async def get_by_device(
     
     result = await db.execute(stmt)
     readings = result.scalars().all()
-    return [to_response(r) for r in readings]
+    return [util.to_response(r) for r in readings]
 
 
 async def get_all(
@@ -192,7 +167,7 @@ async def get_all(
     
     result = await db.execute(stmt)
     readings = result.scalars().all()
-    return [to_response(r) for r in readings]
+    return [util.to_response(r) for r in readings]
 
 
 async def get_summary_by_device(
@@ -291,6 +266,88 @@ async def delete_old_readings(
     await db.flush()
     return deleted_count
 
+async def get_aggregated_by_device(
+    db: AsyncSession,
+    device_id: int,
+    start_time: datetime,
+    end_time: datetime,
+    granularity: WeatherGranularity | None,
+    auto_granularity: bool,
+    skip: int = 0,
+    limit: int = 100,
+) -> Tuple[list[WeatherReadingAggregate], WeatherGranularity]:
+    effective, bucket_seconds = util.effective_granularity(start_time, end_time, granularity, auto_granularity)
+
+    if limit > util.MAX_SERIES_POINTS:
+        limit = util.MAX_SERIES_POINTS
+
+    bucket = util.bucket_expr(bucket_seconds).label("bucket")
+    stmt = (
+        select(
+            bucket,
+            func.avg(WeatherReadingModel.temperature).label("temperature"),
+            func.avg(WeatherReadingModel.humidity).label("humidity"),
+            func.avg(WeatherReadingModel.pressure).label("pressure"),
+            func.avg(WeatherReadingModel.wind_speed).label("wind_speed"),
+            func.coalesce(func.sum(WeatherReadingModel.rain_amount), 0.0).label("rain_amount"),
+            func.count(WeatherReadingModel.id).label("reading_count"),
+        )
+        .where(
+            and_(
+                WeatherReadingModel.device_id == device_id,
+                WeatherReadingModel.recorded_at >= start_time,
+                WeatherReadingModel.recorded_at <= end_time,
+            )
+        )
+        .group_by(bucket)
+        .order_by(bucket.asc())
+        .offset(skip)
+        .limit(limit)
+    )
+
+    result = await db.execute(stmt)
+    rows = result.all()
+    return ([util.row_to_aggregate(r, device_id=device_id) for r in rows], effective)
+
+async def get_aggregated_all(
+    db: AsyncSession,
+    start_time: datetime,
+    end_time: datetime,
+    granularity: WeatherGranularity | None,
+    auto_granularity: bool,
+    skip: int = 0,
+    limit: int = 100,
+) -> Tuple[list[WeatherReadingAggregate], WeatherGranularity]:
+    effective, bucket_seconds = util.effective_granularity(start_time, end_time, granularity, auto_granularity)
+
+    if limit > util.MAX_SERIES_POINTS:
+        limit = util.MAX_SERIES_POINTS
+
+    bucket = util.bucket_expr(bucket_seconds).label("bucket")
+    stmt = (
+        select(
+            bucket,
+            func.avg(WeatherReadingModel.temperature).label("temperature"),
+            func.avg(WeatherReadingModel.humidity).label("humidity"),
+            func.avg(WeatherReadingModel.pressure).label("pressure"),
+            func.avg(WeatherReadingModel.wind_speed).label("wind_speed"),
+            func.coalesce(func.sum(WeatherReadingModel.rain_amount), 0.0).label("rain_amount"),
+            func.count(WeatherReadingModel.id).label("reading_count"),
+        )
+        .where(
+            and_(
+                WeatherReadingModel.recorded_at >= start_time,
+                WeatherReadingModel.recorded_at <= end_time,
+            )
+        )
+        .group_by(bucket)
+        .order_by(bucket.asc())
+        .offset(skip)
+        .limit(limit)
+    )
+    result = await db.execute(stmt)
+    rows = result.all()
+    return ([util.row_to_aggregate(r, device_id=None) for r in rows], effective)
 
 async def get_sensor_devices(db: AsyncSession) -> Sequence[DeviceModel]:
     """Get all devices configured as sensors."""

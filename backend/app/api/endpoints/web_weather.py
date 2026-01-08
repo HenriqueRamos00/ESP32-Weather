@@ -7,7 +7,9 @@ from app.schemas.weather_reading import (
     WeatherReadingWithLocation,
     LatestReadings,
     WeatherSummary,
+    WeatherGranularity
 )
+from app.utils.weather_reading import DEFAULT_AGG_LOOKBACK
 import app.services.weather_reading as weather_service
 
 router = APIRouter()
@@ -55,9 +57,6 @@ async def get_sensor_latest_for_display(
             detail=f"No readings found for device {device_id}",
         )
     
-    # Load device relationship if not already loaded
-    await db.refresh(reading, ["device"])
-    
     return reading
 
 
@@ -70,28 +69,63 @@ async def get_all_readings(
     db: AsyncSessionDep,
     _: AdminOrUserDep,
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=1000),
+    limit: int = Query(100, ge=1, le=5000),
     start_time: datetime | None = Query(None),
     end_time: datetime | None = Query(None),
+    granularity: WeatherGranularity | None = Query(
+        None,
+        description=(
+            "Aggregate readings into time buckets. If omitted and auto_granularity=true, "
+            "the API picks a granularity based on the date range."
+        ),
+    ),
+    auto_granularity: bool = Query(
+        False,
+        description="If true, pick an appropriate granularity based on start_time/end_time.",
+    ),
 ) -> Any:
     """
     Get all weather readings with pagination and optional time filtering.
     """
-    readings = await weather_service.get_all(
+    # Aggregation mode: do bucketed aggregation at query-time and enforce max payload size.
+    if granularity is not None or auto_granularity:
+        if start_time is None or end_time is None:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="start_time and end_time are required when using granularity/auto_granularity on this endpoint.",
+            )
+        if start_time >= end_time:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="start_time must be earlier than end_time.",
+            )
+        agg_readings, effective = await weather_service.get_aggregated_all(
+            db,
+            start_time=start_time,
+            end_time=end_time,
+            granularity=granularity,
+            auto_granularity=auto_granularity,
+            skip=skip,
+            limit=limit,
+        )
+        return WeatherReadingList(
+            readings=agg_readings,
+            total=len(agg_readings),
+            aggregated=True,
+            granularity=effective,
+        )
+    
+    # Raw mode
+    raw_readings = await weather_service.get_all(
         db,
         skip=skip,
         limit=limit,
         start_time=start_time,
         end_time=end_time,
     )
+    total = await weather_service.count(db, start_time=start_time, end_time=end_time)
     
-    total = await weather_service.count(
-        db,
-        start_time=start_time,
-        end_time=end_time,
-    )
-    
-    return WeatherReadingList(readings=readings, total=total)
+    return WeatherReadingList(readings=raw_readings, total=total)
 
 @router.get(
     "/display/sensor/{device_id}/history",
@@ -103,32 +137,70 @@ async def get_sensor_history(
     db: AsyncSessionDep,
     _: AdminOrUserDep,
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=10000),
+    limit: int = Query(100, ge=1, le=5000),
     start_time: datetime | None = Query(None, description="Filter readings from this time"),
     end_time: datetime | None = Query(None, description="Filter readings until this time"),
+    granularity: WeatherGranularity | None = Query(
+        None,
+        description=(
+            "Aggregate readings into time buckets. If omitted and auto_granularity=true, "
+            "the API picks a granularity based on the date range.")),
+    auto_granularity: bool = Query(
+        True,
+        description="If true and granularity is not set, pick an appropriate granularity based on the date range.",),
 ) -> Any:
     """
     Get historical weather readings from a specific sensor.
     
-    Supports pagination and time range filtering.
+    Supports pagination, time range filtering, and optional query-time aggregation.
     """
-    readings = await weather_service.get_by_device(
-        db, 
-        device_id, 
-        skip=skip, 
-        limit=limit,
-        start_time=start_time, 
-        end_time=end_time,
-    )
+    # If aggregation is requested but no range is specified, default to last 24h.
+    if (granularity is not None or auto_granularity) and (start_time is None and end_time is None):
+        end_time = datetime.now(timezone.utc)
+        start_time = end_time.replace()  # copy
+        start_time = start_time - DEFAULT_AGG_LOOKBACK
     
-    total = await weather_service.count(
+    if granularity is not None or auto_granularity:
+        if start_time is None or end_time is None:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="start_time and end_time are required when using granularity/auto_granularity.",
+            )
+        if start_time >= end_time:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="start_time must be earlier than end_time.",
+            )
+        agg_readings, effective = await weather_service.get_aggregated_by_device(
+            db,
+            device_id=device_id,
+            start_time=start_time,
+            end_time=end_time,
+            granularity=granularity,
+            auto_granularity=auto_granularity,
+            skip=skip,
+            limit=limit,
+        )
+        return WeatherReadingList(
+            readings=agg_readings,
+            total=len(agg_readings),
+            aggregated=True,
+            granularity=effective,
+        )
+    
+    # Raw mode
+    raw_readings = await weather_service.get_by_device(
         db,
-        device_id=device_id,
+        device_id,
+        skip=skip,
+        limit=limit,
         start_time=start_time,
         end_time=end_time,
     )
-    
-    return WeatherReadingList(readings=readings, total=total)
+    total = await weather_service.count(
+        db, device_id=device_id, start_time=start_time, end_time=end_time
+    )
+    return WeatherReadingList(readings=raw_readings, total=total)
 
 @router.get(
     "/display/sensor/{device_id}/summary",

@@ -9,7 +9,11 @@ import DateRangeButtons, { type RangePreset } from '@/components/Dashboard/DateR
 import WeatherMetricChart from '@/components/Dashboard/WeatherMetricChart.vue'
 import SensorSummaryCard from '@/components/Dashboard/SensorSummaryCard.vue'
 import LatestMetricsCards from '@/components/Dashboard/LatestMetricsCards.vue'
-import type { WeatherReading, WeatherSummary } from '@/services/weatherReadingService'
+import type {
+  WeatherReadingPoint,
+  WeatherSummary,
+  WeatherReadingWithLocation,
+} from '@/services/weatherReadingService'
 
 type MaybeWithStatus = {
   status?: number
@@ -18,7 +22,7 @@ type MaybeWithStatus = {
 }
 
 const { devices, fetchDevices, loading: devicesLoading } = useDevices()
-const { fetchSensorHistory, fetchSensorSummary } = useWeatherReadings()
+const { fetchSensorHistory, fetchSensorSummary, fetchSensorLatest } = useWeatherReadings()
 const { error: showError } = useToast()
 
 const initialLoading = ref(true)
@@ -26,9 +30,11 @@ const selectedSensorId = ref<number | null>(null)
 const selectedMetric = ref<MetricKey>('temperature')
 const selectedRange = ref<RangePreset>('1d')
 const chartLoading = ref(false)
+const loadSeq = ref(0)
 
-const chartReadings = ref<WeatherReading[]>([])
+const chartReadings = ref<WeatherReadingPoint[]>([])
 const sensorSummary = ref<WeatherSummary | null>(null)
+const latestSensorReading = ref<WeatherReadingWithLocation | null>(null)
 
 const sensors = computed(() =>
   devices.value
@@ -62,40 +68,40 @@ function getDateRangeFromPreset(preset: RangePreset): {
       return {
         start: new Date(now.getTime() - 24 * 60 * 60 * 1000),
         end,
-        limit: 300, // ~288 readings for 5min intervals
+        limit: 2000,
       }
     case '3d':
       return {
         start: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000),
         end,
-        limit: 900,
+        limit: 2000,
       }
     case '5d':
       return {
         start: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000),
         end,
-        limit: 1500,
+        limit: 2000,
       }
     case '1w':
       return {
         start: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000),
         end,
-        limit: 2100,
+        limit: 2000,
       }
     case '1m':
       return {
-        start: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000),
+        start: new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000),
         end,
-        limit: 5000,
+        limit: 2000,
       }
-    case 'all':
+    case '1y':
       return {
-        start: null,
-        end: null,
-        limit: 10000, // Safety limit
+        start: new Date(now.getTime() - 12 * 180 * 24 * 60 * 60 * 1000),
+        end,
+        limit: 5000, // Safety limit
       }
     default:
-      return { start: null, end: null, limit: 500 }
+      return { start: null, end: null, limit: 2000 }
   }
 }
 
@@ -108,9 +114,12 @@ function isNotFound(err: unknown): boolean {
 }
 
 async function loadForSensor(deviceId: number, clearData = true) {
+  const mySeq = ++loadSeq.value
+
   if (clearData) {
     chartReadings.value = []
     sensorSummary.value = null
+    latestSensorReading.value = null
   }
 
   chartLoading.value = true
@@ -124,25 +133,43 @@ async function loadForSensor(deviceId: number, clearData = true) {
         limit,
         start_time: start,
         end_time: end,
+        auto_granularity: true,
       })
+      // If user changed sensor while request was in-flight, ignore this response.
+      if (mySeq !== loadSeq.value) return
       chartReadings.value = history.readings
     } catch (err) {
       if (!isNotFound(err)) throw err
+      if (mySeq !== loadSeq.value) return
       if (clearData) chartReadings.value = []
     }
 
-    // Summary - only fetch when loading new sensor, not on date range change
+    // Summary + Latest - only fetch when loading new sensor, not on date range change
     if (clearData) {
       try {
         const summary = await fetchSensorSummary(deviceId, 24)
+        if (mySeq !== loadSeq.value) return
         sensorSummary.value = summary
       } catch (err) {
         if (!isNotFound(err)) throw err
+        if (mySeq !== loadSeq.value) return
         sensorSummary.value = null
+      }
+      try {
+        const latest = await fetchSensorLatest(deviceId)
+        if (mySeq !== loadSeq.value) return
+        latestSensorReading.value = latest
+      } catch (err) {
+        if (!isNotFound(err)) throw err
+        if (mySeq !== loadSeq.value) return
+        latestSensorReading.value = null
       }
     }
   } finally {
-    chartLoading.value = false
+    // Only clear loading if this is the latest request
+    if (mySeq === loadSeq.value) {
+      chartLoading.value = false
+    }
   }
 }
 
@@ -168,6 +195,20 @@ watch(
     if (!selectedSensorId.value) return
     try {
       await loadForSensor(selectedSensorId.value, false)
+    } catch (err) {
+      showError('Failed to load sensor data', err instanceof Error ? err.message : undefined)
+    }
+  },
+)
+
+watch(
+  () => selectedSensorId.value,
+  async (newVal, oldVal) => {
+    // When sensor changes, load new sensor data + summary
+    if (!newVal) return
+    if (newVal === oldVal) return
+    try {
+      await loadForSensor(newVal, true)
     } catch (err) {
       showError('Failed to load sensor data', err instanceof Error ? err.message : undefined)
     }
@@ -223,7 +264,7 @@ watch(
 
       <template v-else>
         <!-- Latest Metrics Cards -->
-        <LatestMetricsCards :readings="chartReadings" />
+        <LatestMetricsCards :latest="latestSensorReading" />
         <SensorSummaryCard :summary="sensorSummary" />
 
         <!-- Date Range Buttons -->

@@ -1,12 +1,30 @@
 import { apiClient, ApiError } from './api'
 
 export type ISODateString = string
+export type WeatherGranularity = 'minute' | '5min' | '15min' | 'hour' | '6hour' | 'day'
 export type DateLike = string | Date | null | undefined
 
 function toIso(value: DateLike): string | undefined {
   if (!value) return undefined
   return value instanceof Date ? value.toISOString() : value
 }
+
+/**
+ * Bucketed/aggregated reading returned by the API when granularity/auto_granularity is used.
+ * Note: does NOT include id/created_at.
+ */
+export interface WeatherReadingAggregate {
+  device_id?: number | null
+  temperature: number | null
+  humidity: number | null
+  pressure: number | null
+  wind_speed: number | null
+  rain_amount: number | null
+  recorded_at: ISODateString
+  reading_count: number
+}
+
+export type WeatherReadingPoint = WeatherReading | WeatherReadingAggregate
 
 export interface WeatherReading {
   id: number
@@ -25,8 +43,10 @@ export interface WeatherReadingWithLocation extends WeatherReading {
 }
 
 export interface WeatherReadingListResponse {
-  readings: WeatherReading[]
+  readings: WeatherReadingPoint[]
   total: number
+  aggregated?: boolean
+  granularity?: WeatherGranularity | null
 }
 
 export interface LatestReadingsResponse {
@@ -79,6 +99,8 @@ export const weatherReadingService = {
     limit?: number
     start_time?: DateLike
     end_time?: DateLike
+    granularity?: WeatherGranularity
+    auto_granularity?: boolean
   }): Promise<WeatherReadingListResponse> {
     try {
       const response = await apiClient.get<WeatherReadingListResponse>(`${WEATHER_BASE}/readings`, {
@@ -87,6 +109,8 @@ export const weatherReadingService = {
           limit: params?.limit ?? 100,
           start_time: toIso(params?.start_time),
           end_time: toIso(params?.end_time),
+          granularity: params?.granularity,
+          auto_granularity: params?.auto_granularity,
         },
       })
       return response.data
@@ -102,6 +126,8 @@ export const weatherReadingService = {
       limit?: number
       start_time?: DateLike
       end_time?: DateLike
+      granularity?: WeatherGranularity
+      auto_granularity?: boolean
     },
   ): Promise<WeatherReadingListResponse> {
     try {
@@ -110,9 +136,11 @@ export const weatherReadingService = {
         {
           params: {
             skip: params?.skip ?? 0,
-            limit: params?.limit ?? 100,
+            limit: params?.limit ?? 2000,
             start_time: toIso(params?.start_time),
             end_time: toIso(params?.end_time),
+            granularity: params?.granularity,
+            auto_granularity: params?.auto_granularity ?? true,
           },
         },
       )

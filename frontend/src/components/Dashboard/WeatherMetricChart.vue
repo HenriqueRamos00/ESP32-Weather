@@ -13,7 +13,7 @@ import {
   type ChartOptions,
 } from 'chart.js'
 import { Line } from 'vue-chartjs'
-import type { WeatherReading } from '@/services/weatherReadingService'
+import type { WeatherReadingPoint } from '@/services/weatherReadingService'
 
 ChartJS.register(
   CategoryScale,
@@ -29,7 +29,7 @@ ChartJS.register(
 type MetricKey = 'temperature' | 'humidity' | 'pressure' | 'wind_speed' | 'rain_amount'
 
 const props = defineProps<{
-  readings: WeatherReading[]
+  readings: WeatherReadingPoint[]
   metric: MetricKey
   title?: string
 }>()

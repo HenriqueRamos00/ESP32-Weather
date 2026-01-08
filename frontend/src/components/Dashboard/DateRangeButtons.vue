@@ -1,5 +1,5 @@
 <script setup lang="ts">
-export type RangePreset = '1d' | '3d' | '5d' | '1w' | '1m' | 'all'
+export type RangePreset = '1d' | '3d' | '5d' | '1w' | '1m' | '1y'
 
 const props = defineProps<{
   modelValue: RangePreset
@@ -16,7 +16,7 @@ const presets = [
   { value: '5d' as const, label: '5D' },
   { value: '1w' as const, label: '1W' },
   { value: '1m' as const, label: '1M' },
-  { value: 'all' as const, label: 'ALL' },
+  { value: '1y' as const, label: '1Y' },
 ]
 
 function isActive(value: RangePreset) {

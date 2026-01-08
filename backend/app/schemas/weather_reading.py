@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import Enum
 from typing import Sequence
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -21,6 +22,16 @@ class WeatherReadingBase(BaseModel):
         None, ge=0, description="Rain amount in mm"
     )
 
+class WeatherGranularity(str, Enum):
+    """
+    Supported aggregation bucket sizes.
+    """
+    minute = "minute"
+    five_min = "5min"
+    fifteen_min = "15min"
+    hour = "hour"
+    six_hour = "6hour"
+    day = "day"
 
 class WeatherReadingCreate(WeatherReadingBase):
     """Schema for creating a weather reading from sensor."""
@@ -48,11 +59,21 @@ class WeatherReadingWithLocation(WeatherReading):
     """Weather reading with device location info for displays."""
     device_location: str
 
+class WeatherReadingAggregate(WeatherReadingBase):
+    """
+    Query-time aggregated reading (bucketed).
+    """
+    device_id: int | None = None
+    recorded_at: datetime
+    reading_count: int = Field(..., ge=0)
+
 
 class WeatherReadingList(BaseModel):
     """Paginated list of weather readings."""
-    readings: Sequence[WeatherReading]
+    readings: Sequence[WeatherReading | WeatherReadingAggregate]
     total: int
+    aggregated: bool = False
+    granularity: WeatherGranularity | None = None
 
 
 class LatestReadings(BaseModel):
